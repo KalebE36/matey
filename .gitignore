@@ -1,0 +1,25 @@
+# Maven build output
+/target/
+
+# Eclipse/IntelliJ IDEA files
+/.idea/
+/*.iml
+/.classpath
+/.project
+/.settings/
+
+# VS Code settings
+.vscode/
+
+# MacOS files
+.DS_Store
+
+# Logs
+*.log
+
+# Compiled class files (if outside target/)
+*.class
+
+# Temporary files
+*.tmp
+*.swp
