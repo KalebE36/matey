@@ -1,24 +1,25 @@
 package edu.ufl.cnt4007;
 
-import java.io.InputStream;
-import java.util.Properties;
+import java.io.IOException;
+
+import edu.ufl.cnt4007.config.CommonConfig;
+import edu.ufl.cnt4007.config.PeerConfig;
 
 public class App {
     public static void main(String[] args) {
 
-        InputStream input = App.class.getClassLoader()
-                .getResourceAsStream("application.properties"); // ✅
+        CommonConfig commonCfg;
+        PeerConfig peerCfg;
 
-        Properties props = new Properties();
         try {
-            props.load(input);
-        } catch (Exception e) {
-            // Fail and exit
-            e.printStackTrace();
-            System.exit(1);
+            commonCfg = new CommonConfig();
+            peerCfg = new PeerConfig();
+        } catch (IOException e) {
+            System.err.println("Error reading Common.cfg: " + e.getMessage());
+            return;
         }
 
-        boolean featureEnabled = Boolean.parseBoolean(props.getProperty("cli.enabled", "true"));
-        System.out.println(featureEnabled);
+        System.err.println(commonCfg.toString());
+        System.err.println(peerCfg.toString());
     }
 }
