@@ -1,12 +1,24 @@
 package edu.ufl.cnt4007;
 
-import edu.ufl.cnt4007.core.Peer;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class App {
     public static void main(String[] args) {
-        Peer peer = new Peer("xxx", "123.234", 000);
 
-        System.out.println("Hello World!");
-        System.out.println("Host: " + peer.getHost());
+        InputStream input = App.class.getClassLoader()
+                .getResourceAsStream("application.properties"); // ✅
+
+        Properties props = new Properties();
+        try {
+            props.load(input);
+        } catch (Exception e) {
+            // Fail and exit
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        boolean featureEnabled = Boolean.parseBoolean(props.getProperty("cli.enabled", "true"));
+        System.out.println(featureEnabled);
     }
 }
