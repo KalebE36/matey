@@ -5,6 +5,8 @@ import java.io.ObjectOutputStream;
 import java.lang.Runnable;
 import java.net.Socket;
 
+import edu.ufl.cnt4007.core.PeerProcess;
+
 public class ConnectionHandler implements Runnable {
 
     private final Socket socket;
@@ -12,10 +14,13 @@ public class ConnectionHandler implements Runnable {
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
 
-    // Connection Handler Init
-    ConnectionHandler(Socket socket, String remoteId) {
+    private final PeerProcess peerProcess;
+
+    // Connection Handler Incoming Init
+    public ConnectionHandler(Socket socket, String remoteId, PeerProcess peerProcess) {
         this.socket = socket;
         this.remoteId = remoteId;
+        this.peerProcess = peerProcess;
     }
 
     @Override
