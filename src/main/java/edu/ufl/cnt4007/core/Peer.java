@@ -1,19 +1,23 @@
 package edu.ufl.cnt4007.core;
 
+import edu.ufl.cnt4007.file.Bitfield;
+
 public class Peer {
 
-    private String peerId;
+    private int peerId;
     private String host;
     private int port;
+    private Bitfield bitfield;
     
     // Contructor
-    public Peer(String peerId, String host, int port) {
+    public Peer(int peerId, String host, int port, Bitfield bitfield) {
         this.peerId = peerId;
         this.host = host;
         this.port = port;
+        this.bitfield = bitfield;
     }
 
-    public String getPeerId() {
+    public int getPeerId() {
         return this.peerId;
     }
 
@@ -25,7 +29,9 @@ public class Peer {
         return this.port;
     }
 
-    public void setPeerId(String peerId) {
-        this.peerId = peerId;
+    public boolean isComplete() {
+        return this.bitfield.isComplete();
     }
+
+    
 }

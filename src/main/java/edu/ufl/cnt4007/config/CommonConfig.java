@@ -3,6 +3,8 @@ package edu.ufl.cnt4007.config;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +15,13 @@ public class CommonConfig {
     private final String fileName;
     private final long fileSize;
     private final int pieceSize;
+
+    private void validateFileSize() throws IOException {
+        long actualSize = Files.size(Paths.get(this.fileName));
+        if (actualSize != this.fileSize) {
+            throw new IOException(this.fileName + " size mismatch. Expected: " + this.fileSize + ", actual: " + actualSize);
+        }
+    }
 
     public CommonConfig() throws IOException {
         // Parse Common.cfg
@@ -37,6 +46,8 @@ public class CommonConfig {
         this.fileName = cfg.get("FileName");
         this.fileSize = Long.parseLong(cfg.get("FileSize"));
         this.pieceSize = Integer.parseInt(cfg.get("PieceSize"));
+
+        validateFileSize();
     }
 
     public int getNumberOfPreferredNeighbors() {
