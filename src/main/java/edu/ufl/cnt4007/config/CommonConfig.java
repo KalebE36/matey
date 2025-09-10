@@ -19,7 +19,8 @@ public class CommonConfig {
     private void validateFileSize() throws IOException {
         long actualSize = Files.size(Paths.get(this.fileName));
         if (actualSize != this.fileSize) {
-            throw new IOException(this.fileName + " size mismatch. Expected: " + this.fileSize + ", actual: " + actualSize);
+            throw new IOException(
+                    this.fileName + " size mismatch. Expected: " + this.fileSize + ", actual: " + actualSize);
         }
     }
 
@@ -27,7 +28,7 @@ public class CommonConfig {
         // Parse Common.cfg
         Map<String, String> cfg = new HashMap<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader("Common.cfg"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("cfg/Common.cfg"))) {
             String line;
 
             while ((line = reader.readLine()) != null) {

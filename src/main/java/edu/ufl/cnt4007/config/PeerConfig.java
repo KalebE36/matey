@@ -27,7 +27,7 @@ public class PeerConfig {
 
     public PeerConfig() throws IOException {
         try ( // Parse PeerInfo.cfg
-                BufferedReader reader = new BufferedReader(new FileReader("PeerInfo.cfg"))) {
+                BufferedReader reader = new BufferedReader(new FileReader("cfg/PeerInfo.cfg"))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
