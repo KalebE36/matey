@@ -5,6 +5,7 @@ import java.io.IOException;
 import edu.ufl.cnt4007.config.CommonConfig;
 import edu.ufl.cnt4007.config.PeerConfig;
 import edu.ufl.cnt4007.core.PeerManager;
+import edu.ufl.cnt4007.core.PeerProcess;
 
 public class App {
     public static void main(String[] args) {
@@ -20,8 +21,7 @@ public class App {
             return;
         }
 
-        PeerManager peerManager = new PeerManager(peerCfg, commonCfg);
+        PeerProcess peerProcess = new PeerProcess(commonCfg, peerCfg);
 
-        System.out.println(peerManager.isPeerComplete(1001));
     }
 }
