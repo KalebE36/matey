@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import edu.ufl.cnt4007.config.CommonConfig;
 import edu.ufl.cnt4007.config.PeerConfig;
-import edu.ufl.cnt4007.core.PeerManager;
 import edu.ufl.cnt4007.core.PeerProcess;
 
 public class App {
@@ -13,6 +12,7 @@ public class App {
         CommonConfig commonCfg;
         PeerConfig peerCfg;
 
+        /* Config */
         try {
             commonCfg = new CommonConfig();
             peerCfg = new PeerConfig();
@@ -21,7 +21,7 @@ public class App {
             return;
         }
 
-        PeerProcess peerProcess = new PeerProcess(commonCfg, peerCfg);
-
+        PeerProcess peerProcess = new PeerProcess(commonCfg, peerCfg, 1);
+        peerProcess.start();
     }
 }
