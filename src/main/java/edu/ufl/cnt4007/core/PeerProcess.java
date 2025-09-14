@@ -1,5 +1,6 @@
 package edu.ufl.cnt4007.core;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -29,6 +30,8 @@ public class PeerProcess {
 
     public void start() {
         System.out.println("Starting process");
+
+        startListener();
     }
 
     private void startListener() {
@@ -39,15 +42,16 @@ public class PeerProcess {
                 System.out.println("Peer " + myId + " is listening on port " + peerConfig.getPeerInfo(myId).port);
                 while (!Thread.currentThread().isInterrupted()) {
                     Socket newConnection = listener.accept();
-                    // Handle the new connection in a separate thread via ConnectionHandler
-                    // The ConnectionHandler will perform the handshake and determine the
-                    // remotePeerId
-                    new Thread(new ConnectionHandler(newConnection, this)).start();
+
+                    ConnectionHandler connection = new ConnectionHandler(newConnection, this);
+                    new Thread(connection).start();
+                    activeConnections.put(activeConnections.size(), connection);
                 }
 
-            } catch (Exception e) {
-                // TODO: handle exception
+            } catch (IOException e) {
+                System.err.println("\"Peer \" + myPeerId + \" failed to start listener: \" + e.getMessage()");
+
             }
-        });
+        }).start();
     }
 }

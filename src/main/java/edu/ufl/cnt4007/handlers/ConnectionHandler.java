@@ -17,9 +17,8 @@ public class ConnectionHandler implements Runnable {
     private final PeerProcess peerProcess;
 
     // Connection Handler Incoming Init
-    public ConnectionHandler(Socket socket, String remoteId, PeerProcess peerProcess) {
+    public ConnectionHandler(Socket socket, PeerProcess peerProcess) {
         this.socket = socket;
-        this.remoteId = remoteId;
         this.peerProcess = peerProcess;
     }
 
