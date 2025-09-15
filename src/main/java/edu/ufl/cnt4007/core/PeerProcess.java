@@ -16,22 +16,20 @@ public class PeerProcess {
 
     private final CommonConfig commonConfig;
     private final PeerConfig peerConfig;
-    private PeerManager peerManager;
-    private Bitfield bitField;
-    private int myId;
+    private Peer myPeer;
 
     private Map<Integer, ConnectionHandler> activeConnections = new HashMap<>();
 
-    public PeerProcess(CommonConfig commonConfig, PeerConfig peerConfig, int myId) {
+    public PeerProcess(CommonConfig commonConfig, PeerConfig peerConfig, int peerId) {
         this.commonConfig = commonConfig;
         this.peerConfig = peerConfig;
-        this.myId = myId;
-        peerManager = new PeerManager(peerConfig, commonConfig);
+        this.myPeer = new Peer(peerId, peerConfig.getPeerInfo(peerId).host, peerConfig.getPeerInfo(peerId).port,
+                new Bitfield(commonConfig.getFileSize(), commonConfig.getPieceSize(),
+                        peerConfig.getPeerInfo(peerId).hasFile));
     }
 
     public void start() {
         System.out.println("Starting process");
-
         startListener();
     }
 
@@ -44,9 +42,10 @@ public class PeerProcess {
     // TODO Need error handling
     private void startListener() {
         new Thread(() -> {
-            try (ServerSocket listener = new ServerSocket(peerConfig.getPeerInfo(myId).port);) {
+            try (ServerSocket listener = new ServerSocket(peerConfig.getPeerInfo(myPeer.getPeerId()).port);) {
 
-                System.out.println("Peer " + myId + " is listening on port " + peerConfig.getPeerInfo(myId).port);
+                System.out.println(
+                        "Peer " + myPeer.getPeerId() + " is listening on port " + peerConfig.getPeerInfo(this.myPeer.getPeerId()).port);
                 while (!Thread.currentThread().isInterrupted()) {
                     Socket newConnection = listener.accept();
 
@@ -62,18 +61,26 @@ public class PeerProcess {
     }
 
     // Making TCP connections
-    private void startSender() {
+    private void startSender(int peerId) {
+        if (peerId == myPeer.getPeerId()) {
+            System.err.println("Cannot connect to self");
+            return;
+        }
+
+        PeerInfo peerInfo = peerConfig.getPeerInfo(peerId);
+
+        if (peerInfo == null) {
+            System.err.println("Peer ID not found in config");
+            return;
+        }
+
         new Thread(() -> {
             try {
-                Map<Integer, PeerInfo> peerInfo = peerConfig.getPeerInfoMap();
-                for (Map.Entry<Integer, PeerInfo> entry : peerInfo.entrySet()) {
-                    if (entry.getValue().peerId != myId) {
-                        Socket sender = new Socket(entry.getValue().host, entry.getValue().peerId);
-                    }
-                }
+
+                Socket sender = new Socket(peerInfo.host, peerInfo.port);
 
             } catch (Exception e) {
-                // TODO: handle exception
+                //
             }
         }).start();
     }

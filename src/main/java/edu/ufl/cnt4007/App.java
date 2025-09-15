@@ -26,7 +26,6 @@ public class App {
             peerProcess.start();
         } catch (Exception e) {
             System.err.println("Invalid argument");
-            return;
         }
 
     }
