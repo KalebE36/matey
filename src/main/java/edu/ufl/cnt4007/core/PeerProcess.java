@@ -34,10 +34,16 @@ public class PeerProcess {
         startListener();
     }
 
+    public void setConnection(int remoteId, ConnectionHandler connection) {
+        // TODO Error handling
+        addConnection(remoteId, connection);
+    }
+
+    // Listening for incoming TCP connections
+    // TODO Need error handling
     private void startListener() {
         new Thread(() -> {
-            try (
-                    ServerSocket listener = new ServerSocket(peerConfig.getPeerInfo(myId).port);) {
+            try (ServerSocket listener = new ServerSocket(peerConfig.getPeerInfo(myId).port);) {
 
                 System.out.println("Peer " + myId + " is listening on port " + peerConfig.getPeerInfo(myId).port);
                 while (!Thread.currentThread().isInterrupted()) {
@@ -45,7 +51,6 @@ public class PeerProcess {
 
                     ConnectionHandler connection = new ConnectionHandler(newConnection, this);
                     new Thread(connection).start();
-                    activeConnections.put(activeConnections.size(), connection);
                 }
 
             } catch (IOException e) {
@@ -54,4 +59,9 @@ public class PeerProcess {
             }
         }).start();
     }
+
+    private void addConnection(int remoteId, ConnectionHandler connection) {
+        activeConnections.put(remoteId, connection);
+    }
+
 }

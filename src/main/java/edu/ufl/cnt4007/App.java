@@ -21,7 +21,13 @@ public class App {
             return;
         }
 
-        PeerProcess peerProcess = new PeerProcess(commonCfg, peerCfg, 1);
-        peerProcess.start();
+        try {
+            PeerProcess peerProcess = new PeerProcess(commonCfg, peerCfg, Integer.parseInt(args[0]));
+            peerProcess.start();
+        } catch (Exception e) {
+            System.err.println("Invalid argument");
+            return;
+        }
+
     }
 }
