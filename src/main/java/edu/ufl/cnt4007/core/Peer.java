@@ -29,7 +29,7 @@ public class Peer {
         return this.port;
     }
 
-    public boolean isComplete() {
+    public boolean isBitfieldComplete() {
         return this.bitfield.isComplete();
     }
 
