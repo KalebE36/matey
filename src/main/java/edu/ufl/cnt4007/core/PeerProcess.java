@@ -8,6 +8,7 @@ import java.util.Map;
 
 import edu.ufl.cnt4007.config.CommonConfig;
 import edu.ufl.cnt4007.config.PeerConfig;
+import edu.ufl.cnt4007.config.PeerConfig.PeerInfo;
 import edu.ufl.cnt4007.file.Bitfield;
 import edu.ufl.cnt4007.handlers.ConnectionHandler;
 
@@ -56,6 +57,23 @@ public class PeerProcess {
             } catch (IOException e) {
                 System.err.println("\"Peer \" + myPeerId + \" failed to start listener: \" + e.getMessage()");
 
+            }
+        }).start();
+    }
+
+    // Making TCP connections
+    private void startSender() {
+        new Thread(() -> {
+            try {
+                Map<Integer, PeerInfo> peerInfo = peerConfig.getPeerInfoMap();
+                for (Map.Entry<Integer, PeerInfo> entry : peerInfo.entrySet()) {
+                    if (entry.getValue().peerId != myId) {
+                        Socket sender = new Socket(entry.getValue().host, entry.getValue().peerId);
+                    }
+                }
+
+            } catch (Exception e) {
+                // TODO: handle exception
             }
         }).start();
     }
