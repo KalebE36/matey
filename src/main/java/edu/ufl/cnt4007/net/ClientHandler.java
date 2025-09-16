@@ -13,7 +13,7 @@ import edu.ufl.cnt4007.core.Message;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
-    private PeerServer server;
+    private final PeerServer server;
     private boolean isRegistered = false;
 
     private void handleHandshakeMessage(byte[] messageBytes) {
@@ -80,10 +80,6 @@ public class ClientHandler implements Runnable {
     public ClientHandler(Socket socket, PeerServer server) {
         this.clientSocket = socket;
         this.server = server;
-    }
-
-    public ClientHandler(Socket socket) {
-        this.clientSocket = socket;
     }
 
     @Override

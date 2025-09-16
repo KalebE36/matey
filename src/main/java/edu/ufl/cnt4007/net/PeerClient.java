@@ -26,7 +26,7 @@ public class PeerClient {
                     Socket clientSocket = new Socket(neighborInfo.host, neighborInfo.port);
                     System.out.println("Client connected to: " + neighborInfo.host);
 
-                    ClientHandler clientSock = new ClientHandler(clientSocket);
+                    ClientHandler clientSock = new ClientHandler(clientSocket, peerServer);
                     new Thread(clientSock).start();
                 }
             }
