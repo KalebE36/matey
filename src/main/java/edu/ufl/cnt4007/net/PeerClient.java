@@ -19,6 +19,7 @@ public class PeerClient {
             for (Map.Entry<Integer, PeerInfo> entry : peerConfig.getPeerInfoMap().entrySet()) {
                 PeerInfo neighborInfo = entry.getValue();
 
+                // This will need to be changed by some algorithm to determine who to talk to
                 if (neighborInfo.peerId < myPeerId) {
                     System.out.println(
                             "Attempting to connect to peer " + neighborInfo.peerId + " at " + neighborInfo.host);
