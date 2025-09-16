@@ -20,7 +20,7 @@ public class PeerClient {
                 PeerInfo neighborInfo = entry.getValue();
 
                 // This will need to be changed by some algorithm to determine who to talk to
-                if (neighborInfo.peerId < myPeerId) {
+                if (!peerServer.doesClientExist(neighborInfo.peerId)) {
                     System.out.println(
                             "Attempting to connect to peer " + neighborInfo.peerId + " at " + neighborInfo.host);
                     Socket clientSocket = new Socket(neighborInfo.host, neighborInfo.port);
