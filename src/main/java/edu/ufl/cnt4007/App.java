@@ -1,28 +1,12 @@
 package edu.ufl.cnt4007;
 
-import java.io.IOException;
-
-import edu.ufl.cnt4007.config.CommonConfig;
-import edu.ufl.cnt4007.config.PeerConfig;
 import edu.ufl.cnt4007.core.PeerProcess;
 
 public class App {
     public static void main(String[] args) {
 
-        CommonConfig commonCfg;
-        PeerConfig peerCfg;
-
-        /* Config */
         try {
-            commonCfg = new CommonConfig();
-            peerCfg = new PeerConfig();
-        } catch (IOException e) {
-            System.err.println("Error reading Common.cfg: " + e.getMessage());
-            return;
-        }
-
-        try {
-            PeerProcess peerProcess = new PeerProcess(commonCfg, peerCfg, Integer.parseInt(args[0]));
+            PeerProcess peerProcess = new PeerProcess(Integer.parseInt(args[0]));
             peerProcess.start();
         } catch (Exception e) {
             System.err.println("Invalid argument");

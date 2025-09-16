@@ -15,6 +15,7 @@ public class PeerServer {
         try {
             this.serverSocket = new ServerSocket(port);
             this.serverSocket.setReuseAddress(true);
+            System.out.println("Server listening on port: " + port);
 
             // running infinite loop for getting
             // client request
@@ -52,5 +53,10 @@ public class PeerServer {
 
     public void registerClient(int peerId, ClientHandler clientHandler) {
         this.registeredClients.put(peerId, clientHandler);
+    }
+
+    // Not sure if this is safe or not
+    public ConcurrentHashMap<Integer, ClientHandler> getRegisteredClients() {
+        return this.registeredClients;
     }
 }
