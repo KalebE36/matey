@@ -5,48 +5,37 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class PeerServer {
+public class PeerServer implements Runnable {
     ServerSocket serverSocket;
 
     // Threadsafe mapping of PeerId to ClientHandler
     ConcurrentHashMap<Integer, ClientHandler> registeredClients = new ConcurrentHashMap<>();
 
-    public PeerServer(int port) throws Exception {
+    public PeerServer(int port) throws IOException {
+        this.serverSocket = new ServerSocket(port);
+        this.serverSocket.setReuseAddress(true);
+        System.out.println("Server socket created on port: " + port);
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Server is now listening for connections...");
         try {
-            this.serverSocket = new ServerSocket(port);
-            this.serverSocket.setReuseAddress(true);
-            System.out.println("Server listening on port: " + port);
-
-            // running infinite loop for getting
-            // client request
             while (true) {
-
-                // socket object to receive incoming client
-                // requests
                 Socket client = this.serverSocket.accept();
-
-                // Displaying that new client is connected
-                // to server
-                System.out.println("New client connected"
-                        + client.getInetAddress()
-                                .getHostAddress());
-
-                // create a new thread object
+                System.out.println("New client connected: " + client.getInetAddress().getHostAddress());
                 ClientHandler clientSock = new ClientHandler(client, this);
-
-                // This thread will handle the client
-                // separately
                 new Thread(clientSock).start();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Server listening loop error: " + e.getMessage());
         } finally {
-            if (this.serverSocket != null) {
-                try {
+            try {
+                if (this.serverSocket != null && !this.serverSocket.isClosed()) {
                     this.serverSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -56,7 +45,7 @@ public class PeerServer {
     }
 
     // Not sure if this is safe or not
-    public ConcurrentHashMap<Integer, ClientHandler> getRegisteredClients() {
-        return this.registeredClients;
+    public Boolean doesClientExist(int peerId) {
+        return this.registeredClients.containsKey(peerId);
     }
 }

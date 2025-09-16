@@ -4,12 +4,14 @@ import java.io.IOException;
 import edu.ufl.cnt4007.config.CommonConfig;
 import edu.ufl.cnt4007.config.PeerConfig;
 import edu.ufl.cnt4007.file.Bitfield;
+import edu.ufl.cnt4007.net.PeerClient;
 import edu.ufl.cnt4007.net.PeerServer;
 
 public class PeerProcess {
 
     private CommonConfig commonConfig;
     private PeerConfig peerConfig;
+    private PeerServer peerServer;
     private Peer myPeer;
 
     public PeerProcess(int peerId) {
@@ -29,12 +31,22 @@ public class PeerProcess {
     public void start() {
         System.out.println("Starting process");
         inititalizeServer();
-
+        initializeClient();
     }
 
     private void inititalizeServer() {
         try {
-            new PeerServer(myPeer.getPort());
+            this.peerServer = new PeerServer(myPeer.getPort());
+            new Thread(peerServer).start();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            return;
+        }
+    }
+
+    private void initializeClient() {
+        try {
+            new PeerClient(myPeer.getPeerId(), peerServer, peerConfig);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             return;
