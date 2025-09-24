@@ -12,6 +12,7 @@ public class PeerProcess {
     private CommonConfig commonConfig;
     private PeerConfig peerConfig;
     private PeerServer peerServer;
+    private PeerClient peerClient;
     private Peer myPeer;
 
     public PeerProcess(int peerId) {
@@ -46,7 +47,8 @@ public class PeerProcess {
 
     private void initializeClient() {
         try {
-            new PeerClient(myPeer.getPeerId(), peerServer, peerConfig);
+            this.peerClient = new PeerClient(myPeer.getPeerId(), peerServer, peerConfig);
+            new Thread(peerClient).start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
             return;
