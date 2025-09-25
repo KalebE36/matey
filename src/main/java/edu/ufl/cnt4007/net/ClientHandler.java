@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 import edu.ufl.cnt4007.core.Message;
 import edu.ufl.cnt4007.core.PeerProcess;
+import java.util.Optional;
 
 public class ClientHandler extends Handler implements Runnable {
     private final Socket clientSocket;
@@ -35,8 +36,7 @@ public class ClientHandler extends Handler implements Runnable {
             byte[] inputBytes = clientSocket.getInputStream().readAllBytes();
 
             if (!isRegistered) {
-                // Handle handshake
-                getHandleHandshakeMessage(inputBytes, 1, peerProcess);
+                getHandleHandshakeMessage(inputBytes, 1, peerProcess, Optional.of(this), Optional.of(null));
             } else {
 
             }
