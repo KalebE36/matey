@@ -6,6 +6,9 @@ import edu.ufl.cnt4007.config.PeerConfig;
 import edu.ufl.cnt4007.file.Bitfield;
 import edu.ufl.cnt4007.net.PeerClient;
 import edu.ufl.cnt4007.net.PeerServer;
+import edu.ufl.cnt4007.net.ServerHandler;
+import edu.ufl.cnt4007.net.ClientHandler;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PeerProcess {
 
@@ -14,6 +17,9 @@ public class PeerProcess {
     private PeerServer peerServer;
     private PeerClient peerClient;
     private Peer myPeer;
+
+    ConcurrentHashMap<Integer, ClientHandler> registeredClients = new ConcurrentHashMap<>();
+    ConcurrentHashMap<Integer, ServerHandler> registeredServers = new ConcurrentHashMap<>();
 
     public PeerProcess(int peerId) {
         try {
@@ -37,7 +43,7 @@ public class PeerProcess {
 
     private void inititalizeServer() {
         try {
-            this.peerServer = new PeerServer(myPeer.getPort());
+            this.peerServer = new PeerServer(myPeer.getPort(), this);
             new Thread(peerServer).start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -47,12 +53,20 @@ public class PeerProcess {
 
     private void initializeClient() {
         try {
-            this.peerClient = new PeerClient(myPeer.getPeerId(), peerServer, peerConfig);
+            this.peerClient = new PeerClient(myPeer.getPeerId(), peerServer, peerConfig, this);
             new Thread(peerClient).start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
             return;
         }
+    }
+
+    public ConcurrentHashMap<Integer, ClientHandler> getRegisteredClients() {
+        return registeredClients;
+    }
+
+    public ConcurrentHashMap<Integer, ServerHandler> getRegisteredServers() {
+        return registeredServers;
     }
 
 }

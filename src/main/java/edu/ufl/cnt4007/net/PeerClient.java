@@ -6,6 +6,7 @@ import java.util.Map;
 
 import edu.ufl.cnt4007.config.PeerConfig;
 import edu.ufl.cnt4007.config.PeerConfig.PeerInfo;
+import edu.ufl.cnt4007.core.PeerProcess;
 
 public class PeerClient implements Runnable {
 
@@ -13,13 +14,15 @@ public class PeerClient implements Runnable {
     private final int myPeerId;
     private final PeerServer peerServer;
     private final PeerConfig peerConfig;
+    private final PeerProcess peerProcess;
 
     private static final long RETRY_INTERVAL_MS = 5000;
 
-    public PeerClient(int myPeerId, PeerServer peerServer, PeerConfig peerConfig) { // Added myPeerId
+    public PeerClient(int myPeerId, PeerServer peerServer, PeerConfig peerConfig, PeerProcess peerProcess) {
         this.myPeerId = myPeerId;
         this.peerServer = peerServer;
         this.peerConfig = peerConfig;
+        this.peerProcess = peerProcess;
     }
 
     @Override

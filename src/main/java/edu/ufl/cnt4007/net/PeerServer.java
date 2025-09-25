@@ -5,15 +5,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 
+import edu.ufl.cnt4007.core.PeerProcess;
+
 public class PeerServer implements Runnable {
     ServerSocket serverSocket;
+    private final PeerProcess peerProcess;
 
     // Threadsafe mapping of PeerId to ClientHandler
     ConcurrentHashMap<Integer, ClientHandler> registeredClients = new ConcurrentHashMap<>();
 
-    public PeerServer(int port) throws IOException {
+    public PeerServer(int port, PeerProcess peerProcess) throws IOException {
         this.serverSocket = new ServerSocket(port);
         this.serverSocket.setReuseAddress(true);
+        this.peerProcess = peerProcess;
         System.out.println("Server socket created on port: " + port);
     }
 
@@ -24,7 +28,7 @@ public class PeerServer implements Runnable {
             while (true) {
                 Socket client = this.serverSocket.accept();
                 System.out.println("New client connected: " + client.getInetAddress().getHostAddress());
-                ClientHandler clientSock = new ClientHandler(client, this);
+                ClientHandler clientSock = new ClientHandler(client, this, this.peerProcess);
                 new Thread(clientSock).start();
             }
         } catch (IOException e) {
