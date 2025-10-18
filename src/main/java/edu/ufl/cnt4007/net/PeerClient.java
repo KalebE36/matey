@@ -42,7 +42,7 @@ public class PeerClient implements Runnable {
 
                             System.out.println("Successfully connected to peer " + neighborInfo.peerId);
 
-                            ClientHandler clientHandler = new ClientHandler(clientSocket, peerServer);
+                            ClientHandler clientHandler = new ClientHandler(clientSocket, peerServer, this.peerProcess);
                             new Thread(clientHandler).start();
 
                         } catch (IOException e) {
