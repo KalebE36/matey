@@ -25,14 +25,14 @@ public class PeerClient implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Peer Client thread started. Will attempt to connect to preceding peers.");
+        System.out.println("[DEBUG] Peer Client thread started. Will attempt to connect to preceding peers.");
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 for (Map.Entry<Integer, PeerInfo> entry : peerConfig.getPeerInfoMap().entrySet()) {
                     PeerInfo neighborInfo = entry.getValue();
 
-                    if ((!!peerProcess.doesClientExist(neighborInfo.peerId))
+                    if ((!peerProcess.doesClientExist(neighborInfo.peerId))
                             && (!peerProcess.doesServerExist(neighborInfo.peerId))
                             && (neighborInfo.peerId != myPeerId)) {
 
@@ -42,7 +42,7 @@ public class PeerClient implements Runnable {
 
                             System.out.println("[DEBUG] Successfully connected to peer " + neighborInfo.peerId);
 
-                            ServerHandler clientHandler = new ServerHandler(clientSocket, this);
+                            ServerHandler clientHandler = new ServerHandler(neighborInfo.peerId, clientSocket, this);
                             new Thread(clientHandler).start();
 
                         } catch (IOException e) {
@@ -66,11 +66,11 @@ public class PeerClient implements Runnable {
         return peerProcess;
     }
 
-    public int getPeerId() {
-        return myPeerId;
-    }
-
     public void registerServer(int peerId, ServerHandler serverHandler) {
         peerProcess.getRegisteredServers().put(peerId, serverHandler);
+    }
+
+    public int getMyPeerId() {
+        return myPeerId;
     }
 }

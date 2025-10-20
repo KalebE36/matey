@@ -30,6 +30,7 @@ public class Handler {
         // Register either a server or a client connection
 
         server.registerClient(peerId, clientHandler);
+        System.out.println("[TESTING] SERVER REGISTERED CLIENT: " + peerId);
 
         return peerId;
     }
@@ -76,7 +77,7 @@ public class Handler {
         int peerId = handleHandshakeMessage(messageBytes, server, clientHandler);
         if (peerId != -1) {
             System.out.println(
-                    "Handshake successful  with peer ID: " + peerId);
+                    "[DEBUG] Handshake successful  with peer ID: " + peerId);
         }
         return peerId;
     }

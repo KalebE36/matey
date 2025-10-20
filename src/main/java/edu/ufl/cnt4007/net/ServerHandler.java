@@ -10,11 +10,13 @@ import java.util.Optional;
 import edu.ufl.cnt4007.config.PeerConfig.PeerInfo;
 
 public class ServerHandler extends Handler implements Runnable {
+    int peerId;
     private Socket socket;
     private PeerClient peerClient;
     private boolean isRegistered = false;
 
-    public ServerHandler(Socket socket, PeerClient peerClient) {
+    public ServerHandler(int peerId, Socket socket, PeerClient peerClient) {
+        this.peerId = peerId;
         this.socket = socket;
         this.peerClient = peerClient;
     }
@@ -23,13 +25,13 @@ public class ServerHandler extends Handler implements Runnable {
     public void run() {
         try (OutputStream out = socket.getOutputStream();
                 InputStream in = socket.getInputStream()) {
-            byte[] handshakeMessage = createHandshakeMessage(peerClient.getPeerId());
+            byte[] handshakeMessage = createHandshakeMessage(peerClient.getMyPeerId());
             out.write(handshakeMessage);
             out.flush();
-            System.out.println("[DEBUG] Sent handshake to peer " + peerClient.getPeerId());
+            System.out.println("[DEBUG] Sent handshake to peer " + peerId);
 
             this.isRegistered = true;
-            peerClient.registerServer(peerClient.getPeerId(), this);
+            peerClient.registerServer(peerId, this);
         } catch (IOException e) {
 
         } finally {

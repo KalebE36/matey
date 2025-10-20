@@ -36,7 +36,7 @@ public class PeerProcess {
     }
 
     public void start() {
-        System.out.println("Starting process");
+        System.out.println("[START] Starting process");
         inititalizeServer();
         initializeClient();
     }
