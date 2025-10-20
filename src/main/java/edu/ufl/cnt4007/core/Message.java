@@ -22,7 +22,7 @@ public class Message {
             return value;
         }
 
-        public static MessageType fromValue(int value) {
+        private static MessageType fromValue(int value) {
             for (MessageType type : values()) {
                 if (type.value == value) {
                     return type;

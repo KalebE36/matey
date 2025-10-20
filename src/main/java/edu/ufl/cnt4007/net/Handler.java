@@ -2,39 +2,14 @@ package edu.ufl.cnt4007.net;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Optional;
-
+import java.nio.charset.StandardCharsets;
 import edu.ufl.cnt4007.core.Message;
 import edu.ufl.cnt4007.core.PeerProcess;
 
 public class Handler {
 
-    public enum Identifier {
-        SERVER(0),
-        CLIENT(1);
-
-        private int value;
-
-        Identifier(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public static Identifier fromValue(int value) {
-            for (Identifier identifier : values()) {
-                if (identifier.value == value) {
-                    return identifier;
-                }
-            }
-            throw new IllegalArgumentException("Invalid identifier value: " + value);
-        }
-    }
-
-    private static int handleHandshakeMessage(byte[] messageBytes, Identifier identifier,
-            PeerProcess peerProcess, Optional<ClientHandler> clientHandler, Optional<ServerHandler> serverHandler) {
+    private int handleHandshakeMessage(byte[] messageBytes,
+            PeerServer server, ClientHandler clientHandler) {
         // Check if handshake is valid length (32 bytes)
         if (messageBytes.length != 32) {
             System.out.println("Invalid handshake length");
@@ -53,18 +28,13 @@ public class Handler {
         int peerId = buffer.getInt();
 
         // Register either a server or a client connection
-        if ((identifier == Identifier.CLIENT) && clientHandler.isPresent()) {
-            peerProcess.getRegisteredClients().put(peerId, clientHandler.get());
-        }
 
-        if ((identifier == Identifier.SERVER) && serverHandler.isPresent()) {
-            peerProcess.getRegisteredServers().put(peerId, serverHandler.get());
-        }
+        server.registerClient(peerId, clientHandler);
 
         return peerId;
     }
 
-    private static void handleMessage(byte[] messageBytes) {
+    private void handleMessage(byte[] messageBytes) {
         // Check if message is at least 5 bytes (4 bytes length + 1 byte type)
         if (messageBytes.length < 5) {
             System.out.println("Invalid message length");
@@ -101,15 +71,30 @@ public class Handler {
         }
     }
 
-    public static int getHandleHandshakeMessage(byte[] messageBytes, int identifier, PeerProcess peerProcess,
-            Optional<ClientHandler> clientHandler, Optional<ServerHandler> serverHandler) {
-        Identifier typeIdentifier = Identifier.fromValue(identifier);
-        int peerId = handleHandshakeMessage(messageBytes, typeIdentifier, peerProcess, clientHandler, serverHandler);
+    public int getHandleHandshakeMessage(byte[] messageBytes, PeerServer server, ClientHandler clientHandler) {
+
+        int peerId = handleHandshakeMessage(messageBytes, server, clientHandler);
         if (peerId != -1) {
             System.out.println(
-                    "Handshake successful (" + typeIdentifier + ") with peer ID: " + peerId);
+                    "Handshake successful  with peer ID: " + peerId);
         }
         return peerId;
+    }
+
+    public void getHandleMessage(byte[] messageBytes) {
+        handleMessage(messageBytes);
+    }
+
+    public byte[] createHandshakeMessage(int myPeerId) {
+        ByteBuffer buffer = ByteBuffer.allocate(32);
+
+        buffer.put("P2PFILESHARINGPROJ".getBytes(StandardCharsets.US_ASCII));
+
+        buffer.put(new byte[10]);
+
+        buffer.putInt(myPeerId);
+
+        return buffer.array();
     }
 
 }

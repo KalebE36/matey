@@ -10,20 +10,17 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import edu.ufl.cnt4007.core.Message;
-import edu.ufl.cnt4007.core.PeerProcess;
 import java.util.Optional;
 
 public class ClientHandler extends Handler implements Runnable {
     private final Socket clientSocket;
     private final PeerServer server;
-    private final PeerProcess peerProcess;
     private boolean isRegistered = false;
 
     // Constructor
-    public ClientHandler(Socket socket, PeerServer server, PeerProcess peerProcess) {
+    public ClientHandler(Socket socket, PeerServer server) {
         this.clientSocket = socket;
         this.server = server;
-        this.peerProcess = peerProcess;
     }
 
     @Override
@@ -36,7 +33,8 @@ public class ClientHandler extends Handler implements Runnable {
             byte[] inputBytes = clientSocket.getInputStream().readAllBytes();
 
             if (!isRegistered) {
-                getHandleHandshakeMessage(inputBytes, 1, peerProcess, Optional.of(this), Optional.of(null));
+                int peerId = getHandleHandshakeMessage(inputBytes, this.server, this);
+                System.out.println("[DEBUG] Successfully parsed handshake from " + peerId);
             } else {
 
             }

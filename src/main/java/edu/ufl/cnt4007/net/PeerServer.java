@@ -3,16 +3,12 @@ package edu.ufl.cnt4007.net;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ConcurrentHashMap;
 
 import edu.ufl.cnt4007.core.PeerProcess;
 
 public class PeerServer implements Runnable {
     ServerSocket serverSocket;
     private final PeerProcess peerProcess;
-
-    // Threadsafe mapping of PeerId to ClientHandler
-    ConcurrentHashMap<Integer, ClientHandler> registeredClients = new ConcurrentHashMap<>();
 
     public PeerServer(int port, PeerProcess peerProcess) throws IOException {
         this.serverSocket = new ServerSocket(port);
@@ -23,16 +19,16 @@ public class PeerServer implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Server is now listening for connections...");
+        System.out.println("[DEBUG] Server is now listening for connections...");
         try {
             while (true) {
                 Socket client = this.serverSocket.accept();
-                System.out.println("New client connected: " + client.getInetAddress().getHostAddress());
-                ClientHandler clientSock = new ClientHandler(client, this, this.peerProcess);
+                System.out.println("[DEBUG] New client connected: " + client.getInetAddress().getHostAddress());
+                ClientHandler clientSock = new ClientHandler(client, this);
                 new Thread(clientSock).start();
             }
         } catch (IOException e) {
-            System.err.println("Server listening loop error: " + e.getMessage());
+            System.err.println("[ERROR] Server listening loop error: " + e.getMessage());
         } finally {
             try {
                 if (this.serverSocket != null && !this.serverSocket.isClosed()) {
@@ -45,11 +41,10 @@ public class PeerServer implements Runnable {
     }
 
     public void registerClient(int peerId, ClientHandler clientHandler) {
-        this.registeredClients.put(peerId, clientHandler);
+        peerProcess.getRegisteredClients().put(peerId, clientHandler);
     }
 
-    // Not sure if this is safe or not
-    public Boolean doesClientExist(int peerId) {
-        return this.registeredClients.containsKey(peerId);
+    public PeerProcess getPeerProcess() {
+        return peerProcess;
     }
 }

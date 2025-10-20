@@ -12,15 +12,13 @@ public class PeerClient implements Runnable {
 
     Socket clientSocket;
     private final int myPeerId;
-    private final PeerServer peerServer;
     private final PeerConfig peerConfig;
     private final PeerProcess peerProcess;
 
     private static final long RETRY_INTERVAL_MS = 5000;
 
-    public PeerClient(int myPeerId, PeerServer peerServer, PeerConfig peerConfig, PeerProcess peerProcess) {
+    public PeerClient(int myPeerId, PeerConfig peerConfig, PeerProcess peerProcess) {
         this.myPeerId = myPeerId;
-        this.peerServer = peerServer;
         this.peerConfig = peerConfig;
         this.peerProcess = peerProcess;
     }
@@ -34,20 +32,22 @@ public class PeerClient implements Runnable {
                 for (Map.Entry<Integer, PeerInfo> entry : peerConfig.getPeerInfoMap().entrySet()) {
                     PeerInfo neighborInfo = entry.getValue();
 
-                    if ((!peerServer.doesClientExist(neighborInfo.peerId)) && (neighborInfo.peerId != myPeerId)) {
+                    if ((!!peerProcess.doesClientExist(neighborInfo.peerId))
+                            && (!peerProcess.doesServerExist(neighborInfo.peerId))
+                            && (neighborInfo.peerId != myPeerId)) {
 
                         try {
-                            System.out.println("Attempting to connect to peer " + neighborInfo.peerId);
+                            System.out.println("[DEBUG] Attempting to connect to peer " + neighborInfo.peerId);
                             Socket clientSocket = new Socket(neighborInfo.host, neighborInfo.port);
 
-                            System.out.println("Successfully connected to peer " + neighborInfo.peerId);
+                            System.out.println("[DEBUG] Successfully connected to peer " + neighborInfo.peerId);
 
-                            ClientHandler clientHandler = new ClientHandler(clientSocket, peerServer, this.peerProcess);
+                            ServerHandler clientHandler = new ServerHandler(clientSocket, this);
                             new Thread(clientHandler).start();
 
                         } catch (IOException e) {
                             System.out.println(
-                                    "Failed to connect to peer " + neighborInfo.peerId + ". Will retry later.");
+                                    "[DEBUG] Failed to connect to peer " + neighborInfo.peerId + ". Will retry later.");
                         }
                     }
                 }
@@ -56,9 +56,21 @@ public class PeerClient implements Runnable {
                 Thread.sleep(RETRY_INTERVAL_MS);
 
             } catch (InterruptedException e) {
-                System.out.println("Peer Connector thread was interrupted. Shutting down.");
+                System.out.println("[EXIT] Peer Connector thread was interrupted. Shutting down.");
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    public PeerProcess getPeerProcess() {
+        return peerProcess;
+    }
+
+    public int getPeerId() {
+        return myPeerId;
+    }
+
+    public void registerServer(int peerId, ServerHandler serverHandler) {
+        peerProcess.getRegisteredServers().put(peerId, serverHandler);
     }
 }

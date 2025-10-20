@@ -53,7 +53,7 @@ public class PeerProcess {
 
     private void initializeClient() {
         try {
-            this.peerClient = new PeerClient(myPeer.getPeerId(), peerServer, peerConfig, this);
+            this.peerClient = new PeerClient(myPeer.getPeerId(), peerConfig, this);
             new Thread(peerClient).start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -67,6 +67,14 @@ public class PeerProcess {
 
     public ConcurrentHashMap<Integer, ServerHandler> getRegisteredServers() {
         return registeredServers;
+    }
+
+    public Boolean doesClientExist(int peerId) {
+        return registeredClients.containsKey(peerId);
+    }
+
+    public Boolean doesServerExist(int peerId) {
+        return registeredServers.containsKey(peerId);
     }
 
 }
