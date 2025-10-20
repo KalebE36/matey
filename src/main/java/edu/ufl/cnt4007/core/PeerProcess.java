@@ -6,13 +6,20 @@ import edu.ufl.cnt4007.config.PeerConfig;
 import edu.ufl.cnt4007.file.Bitfield;
 import edu.ufl.cnt4007.net.PeerClient;
 import edu.ufl.cnt4007.net.PeerServer;
+import edu.ufl.cnt4007.net.ServerHandler;
+import edu.ufl.cnt4007.net.ClientHandler;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PeerProcess {
 
     private CommonConfig commonConfig;
     private PeerConfig peerConfig;
     private PeerServer peerServer;
+    private PeerClient peerClient;
     private Peer myPeer;
+
+    ConcurrentHashMap<Integer, ClientHandler> registeredClients = new ConcurrentHashMap<>();
+    ConcurrentHashMap<Integer, ServerHandler> registeredServers = new ConcurrentHashMap<>();
 
     public PeerProcess(int peerId) {
         try {
@@ -29,14 +36,14 @@ public class PeerProcess {
     }
 
     public void start() {
-        System.out.println("Starting process");
+        System.out.println("[START] Starting process");
         inititalizeServer();
         initializeClient();
     }
 
     private void inititalizeServer() {
         try {
-            this.peerServer = new PeerServer(myPeer.getPort());
+            this.peerServer = new PeerServer(myPeer.getPort(), this);
             new Thread(peerServer).start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -46,11 +53,28 @@ public class PeerProcess {
 
     private void initializeClient() {
         try {
-            new PeerClient(myPeer.getPeerId(), peerServer, peerConfig);
+            this.peerClient = new PeerClient(myPeer.getPeerId(), peerConfig, this);
+            new Thread(peerClient).start();
         } catch (Exception e) {
             System.err.println(e.getMessage());
             return;
         }
+    }
+
+    public ConcurrentHashMap<Integer, ClientHandler> getRegisteredClients() {
+        return registeredClients;
+    }
+
+    public ConcurrentHashMap<Integer, ServerHandler> getRegisteredServers() {
+        return registeredServers;
+    }
+
+    public Boolean doesClientExist(int peerId) {
+        return registeredClients.containsKey(peerId);
+    }
+
+    public Boolean doesServerExist(int peerId) {
+        return registeredServers.containsKey(peerId);
     }
 
 }
