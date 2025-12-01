@@ -101,6 +101,20 @@
                         <mainClass>edu.ufl.cnt4007.App</mainClass>
                     </configuration>
                 </plugin>      
+                <plugin>
+    <groupId>com.diffplug.spotless</groupId>
+    <artifactId>spotless-maven-plugin</artifactId>
+    <version>2.43.0</version>
+    <configuration>
+        <java>
+            <includes>
+                <include>src/main/java/**/*.java</include>
+                <include>src/test/java/**/*.java</include>
+            </includes>
+            <googleJavaFormat />
+        </java>
+    </configuration>
+</plugin>
             </plugins>
         </pluginManagement>
     </build>

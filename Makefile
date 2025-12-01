@@ -9,3 +9,6 @@ run-peer-2:
 
 compile:
 	@mvn clean compile
+
+format:
+	@mvn spotless:apply
