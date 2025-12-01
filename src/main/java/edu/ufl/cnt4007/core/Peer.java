@@ -32,4 +32,8 @@ public class Peer {
   public boolean isBitfieldComplete() {
     return this.bitfield.isComplete();
   }
+
+  public Bitfield getBitfield() {
+    return bitfield;
+  }
 }

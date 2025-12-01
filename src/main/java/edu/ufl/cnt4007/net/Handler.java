@@ -1,14 +1,14 @@
 package edu.ufl.cnt4007.net;
 
 import edu.ufl.cnt4007.core.Message;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public class Handler {
 
-  private int handleHandshakeMessage(
-      byte[] messageBytes, PeerServer server, ClientHandler clientHandler) {
+  private int handleHandshakeMessage(byte[] messageBytes) {
     // Check if handshake is valid length (32 bytes)
     if (messageBytes.length != 32) {
       System.out.println("Invalid handshake length");
@@ -28,63 +28,38 @@ public class Handler {
 
     // Register either a server or a client connection
 
-    server.registerClient(peerId, clientHandler);
     System.out.println("[TESTING] SERVER REGISTERED CLIENT: " + peerId);
 
     return peerId;
   }
 
-  private void handleMessage(byte[] messageBytes) {
-    // Check if message is at least 5 bytes (4 bytes length + 1 byte type)
-    if (messageBytes.length < 5) {
-      System.out.println("Invalid message length");
-      return;
-    }
+  protected void sendMessage(DataOutputStream out, Message msg) throws IOException {
+    out.write(msg.toBytes());
+    out.flush();
+  }
 
-    // Extract message length (first 4 bytes)
-    ByteBuffer lengthBuffer = ByteBuffer.wrap(messageBytes, 0, 4);
-    int messageLength = lengthBuffer.getInt();
-
-    // Extract message type (5th byte)
-    byte messageTypeByte = messageBytes[4];
-    Message.MessageType messageType = Message.getMessageType(messageTypeByte);
-
-    // Check if payload length matches message length so (4 + 1 + message length)
-    if (messageBytes.length != 4 + 1 + messageLength) {
-      System.out.println("Incomplete or malformed message payload");
-      return;
-    }
-
-    Message message =
-        new Message(
-            messageType, messageLength, Arrays.copyOfRange(messageBytes, 5, 5 + messageLength));
-
-    switch (messageType) {
-      case Message.MessageType.CHOKE -> System.out.println("Received CHOKE message");
-      case Message.MessageType.UNCHOKE -> System.out.println("Received UNCHOKE message");
-      case Message.MessageType.INTERESTED -> System.out.println("Received INTERESTED message");
-      case Message.MessageType.NOT_INTERESTED ->
-          System.out.println("Received NOT_INTERESTED message");
-      case Message.MessageType.HAVE -> System.out.println("Received HAVE message");
-      case Message.MessageType.BITFIELD -> System.out.println("Received BITFIELD message");
-      case Message.MessageType.REQUEST -> System.out.println("Received REQUEST message");
-      case Message.MessageType.PIECE -> System.out.println("Received PIECE message");
-      default -> throw new AssertionError();
+  protected void handleMessage(Message message, int peerId) {
+    switch (message.getType()) {
+      case CHOKE -> System.out.println("[INFO] Peer " + peerId + " choked me.");
+      case UNCHOKE -> System.out.println("[INFO] Peer " + peerId + " unchoked me.");
+      case INTERESTED -> System.out.println("[INFO] Peer " + peerId + " is interested.");
+      case NOT_INTERESTED -> System.out.println("[INFO] Peer " + peerId + " is not interested.");
+      case HAVE -> System.out.println("[INFO] Peer " + peerId + " sent HAVE.");
+      case BITFIELD -> handleBitfield(message, peerId);
+      case REQUEST -> System.out.println("[INFO] Peer " + peerId + " requested a piece.");
+      case PIECE -> System.out.println("[INFO] Peer " + peerId + " sent a piece.");
+      default -> System.out.println("[WARN] Unknown message type from " + peerId);
     }
   }
 
-  public int getHandleHandshakeMessage(
-      byte[] messageBytes, PeerServer server, ClientHandler clientHandler) {
+  private void handleBitfield(Message message, int peerId) {
+    System.out.println("[INFO] Received BITFIELD from Peer " + peerId);
+    // TODO: Logic to compare this bitfield with ours and send 'INTERESTED' or 'NOT INTERESTED'
+  }
 
-    int peerId = handleHandshakeMessage(messageBytes, server, clientHandler);
-    if (peerId != -1) {
-      System.out.println("[DEBUG] Handshake successful  with peer ID: " + peerId);
-    }
+  public int getHandleHandshakeMessage(byte[] messageBytes) {
+    int peerId = handleHandshakeMessage(messageBytes);
     return peerId;
-  }
-
-  public void getHandleMessage(byte[] messageBytes) {
-    handleMessage(messageBytes);
   }
 
   public byte[] createHandshakeMessage(int myPeerId) {

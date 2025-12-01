@@ -81,4 +81,8 @@ public class PeerProcess {
   public Boolean doesServerExist(int peerId) {
     return registeredServers.containsKey(peerId);
   }
+
+  public Peer getMyPeer() {
+    return myPeer;
+  }
 }

@@ -1,8 +1,9 @@
 package edu.ufl.cnt4007.net;
 
+import edu.ufl.cnt4007.core.Message;
+import edu.ufl.cnt4007.core.Message.MessageType;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.*;
 
 public class ServerHandler extends Handler implements Runnable {
@@ -35,16 +36,40 @@ public class ServerHandler extends Handler implements Runnable {
       byte[] responseHandshake = new byte[32];
       in.readFully(responseHandshake);
 
-      System.out.println("[DEBUG // CLIENT] Handshake response received from " + targetPeerId);
+      int responseId = getHandleHandshakeMessage(responseHandshake);
 
-      peerClient.registerServer(targetPeerId, this);
+      if (responseId != -1) {
+        if (responseId != targetPeerId) {
+          throw new Exception("Target and peer ID mismatch");
+        }
 
-      while (true) {
-        int length = in.readInt();
-        byte type = in.readByte();
+        System.out.println("[DEBUG // CLIENT] Handshake verified from " + targetPeerId);
+        peerClient.registerServer(targetPeerId, this);
+
+        byte[] bitfieldBytes = peerClient.getPeerProcess().getMyPeer().getBitfield().getBytes();
+        if (bitfieldBytes != null && bitfieldBytes.length > 0) {
+          Message bitfieldMsg = new Message(MessageType.BITFIELD, bitfieldBytes);
+          sendMessage(out, bitfieldMsg);
+          System.out.println("[DEBUG // CLIENT] Sent BITFIELD to Peer " + targetPeerId);
+        }
+
+        while (true) {
+          int length = in.readInt();
+          byte typeByte = in.readByte();
+          MessageType type = Message.getMessageType(typeByte);
+
+          int payloadSize = length - 1;
+          byte[] payload = new byte[payloadSize];
+          if (payloadSize > 0) {
+            in.readFully(payload);
+          }
+
+          Message msg = new Message(type, payload);
+          handleMessage(msg, targetPeerId);
+        }
       }
 
-    } catch (IOException e) {
+    } catch (Exception e) {
       System.err.println("[ERROR // CLIENT] Communication error with " + targetPeerId);
     } finally {
 

@@ -1,5 +1,7 @@
 package edu.ufl.cnt4007.core;
 
+import java.nio.ByteBuffer;
+
 public class Message {
 
   public enum MessageType {
@@ -36,18 +38,35 @@ public class Message {
   private final int length;
   private final byte[] payload;
 
-  public Message(MessageType type, int length, byte[] payload) {
+  public Message(MessageType type, byte[] payload) {
     this.type = type;
-    this.length = length;
+    this.length = 1 + (payload != null ? payload.length : 0);
     this.payload = payload;
   }
 
-  public static MessageType getMessageType(int value) {
-    return MessageType.fromValue(value);
+  public MessageType getType() {
+    return type;
+  }
+
+  public byte[] getPayload() {
+    return payload;
+  }
+
+  public byte[] toBytes() {
+    int payloadSize = (payload != null) ? payload.length : 0;
+    ByteBuffer buffer = ByteBuffer.allocate(4 + 1 + payloadSize);
+
+    buffer.putInt(length);
+    buffer.put((byte) type.getValue());
+
+    if (payload != null && payloadSize > 0) {
+      buffer.put(payload);
+    }
+
+    return buffer.array();
   }
 
   public static MessageType getMessageType(byte b) {
-    // What if parsing throws exception?
-    return getMessageType(Byte.toUnsignedInt(b));
+    return MessageType.fromValue(Byte.toUnsignedInt(b));
   }
 }
