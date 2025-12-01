@@ -2,53 +2,47 @@ package edu.ufl.cnt4007.net;
 
 // ClientHandler class
 
-import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.Socket;
 
 public class ClientHandler extends Handler implements Runnable {
-  private final Socket clientSocket;
+  private final Socket socket;
   private final PeerServer server;
-  private boolean isRegistered = false;
+  private DataOutputStream out;
+  private DataInputStream in;
 
   // Constructor
   public ClientHandler(Socket socket, PeerServer server) {
-    this.clientSocket = socket;
+    this.socket = socket;
     this.server = server;
   }
 
   @Override
   public void run() {
-    PrintWriter out = null;
-    BufferedReader in = null;
     try {
+      out = new DataOutputStream(socket.getOutputStream());
+      in = new DataInputStream(socket.getInputStream());
 
-      // Read from client in bytes
-      byte[] inputBytes = clientSocket.getInputStream().readAllBytes();
+      byte[] handshakeBuffer = new byte[32];
 
-      if (!isRegistered) {
-        int peerId = getHandleHandshakeMessage(inputBytes, this.server, this);
-        System.out.println("[DEBUG] Successfully parsed handshake from " + peerId);
+      in.readFully(handshakeBuffer);
+
+      int peerId = getHandleHandshakeMessage(handshakeBuffer, this.server, this);
+
+      if (peerId != -1) {
+        System.out.println("[DEBUG // SERVER] Handshake verified from Peer " + peerId);
         server.registerClient(peerId, this);
-      } else {
 
+        byte[] myHandshake = createHandshakeMessage(server.getMyPeerId());
+        out.write(myHandshake);
+        out.flush();
       }
-
     } catch (IOException e) {
-      e.printStackTrace();
+      System.err.println("[ERROR // SERVER] Connection error " + e.getMessage());
     } finally {
-      try {
-        if (out != null) out.close();
-        if (in != null) in.close();
 
-        // Close the socket regardless of whether streams were created
-        if (clientSocket != null && !clientSocket.isClosed()) {
-          clientSocket.close();
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     }
   }
 }

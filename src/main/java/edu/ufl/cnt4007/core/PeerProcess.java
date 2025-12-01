@@ -48,7 +48,7 @@ public class PeerProcess {
 
   private void inititalizeServer() {
     try {
-      this.peerServer = new PeerServer(myPeer.getPort(), this);
+      this.peerServer = new PeerServer(myPeer.getPeerId(), myPeer.getPort(), this);
       new Thread(peerServer).start();
     } catch (Exception e) {
       System.err.println(e.getMessage());

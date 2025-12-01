@@ -8,8 +8,10 @@ import java.net.Socket;
 public class PeerServer implements Runnable {
   ServerSocket serverSocket;
   private final PeerProcess peerProcess;
+  private final int peerId;
 
-  public PeerServer(int port, PeerProcess peerProcess) throws IOException {
+  public PeerServer(int peerId, int port, PeerProcess peerProcess) throws IOException {
+    this.peerId = peerId;
     this.serverSocket = new ServerSocket(port);
     this.serverSocket.setReuseAddress(true);
 
@@ -48,5 +50,9 @@ public class PeerServer implements Runnable {
 
   public PeerProcess getPeerProcess() {
     return peerProcess;
+  }
+
+  public int getMyPeerId() {
+    return peerId;
   }
 }
