@@ -26,10 +26,6 @@ public class Handler {
     ByteBuffer buffer = ByteBuffer.wrap(messageBytes, 28, 4);
     int peerId = buffer.getInt();
 
-    // Register either a server or a client connection
-
-    System.out.println("[TESTING] SERVER REGISTERED CLIENT: " + peerId);
-
     return peerId;
   }
 
