@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import edu.ufl.cnt4007.config.ConfigLoader;
 import edu.ufl.cnt4007.config.PeerInfo;
+import edu.ufl.cnt4007.file.DownloadManager;
 import edu.ufl.cnt4007.net.ConnectionHandler;
 import edu.ufl.cnt4007.net.Connector;
 import edu.ufl.cnt4007.net.Listener;
@@ -59,6 +60,7 @@ public class PeerProcess implements PeerContext, Runnable {
     private final List<PeerInfo> allPeers;
     private final Bitfield myBitfield;
     private final ConfigLoader configLoader;
+    private final DownloadManager downloadManager;
 
     // Map of peerId -> neighbor's bitfield
     private final Map<Integer, Bitfield> neighborBitfields = new ConcurrentHashMap<>();
@@ -78,12 +80,19 @@ public class PeerProcess implements PeerContext, Runnable {
     // Timing info for download rate calculation can be added as needed
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-    public PeerProcess(int peerId, ConfigLoader configLoader) {
+    public PeerProcess(int peerId, ConfigLoader configLoader) throws Exception {
         this.configLoader = configLoader;
         this.peerProcessInfo = configLoader.getPeerConfig().getPeerInfo(peerId);
         this.allPeers = configLoader.getPeerConfig().getAllPeerInfo();
         this.myBitfield = new Bitfield(configLoader.getCommonConfig().getFileSize(),
                 configLoader.getCommonConfig().getPieceSize(), peerProcessInfo.hasFile);
+        this.downloadManager = new DownloadManager(
+            peerId,
+            configLoader.getCommonConfig().getFileName(),
+            configLoader.getCommonConfig().getFileSize(),
+            configLoader.getCommonConfig().getPieceSize(),
+            myBitfield
+        );
     }
 
     @Override
@@ -113,14 +122,14 @@ public class PeerProcess implements PeerContext, Runnable {
     @Override
     public void onMessageReceived(int remotePeerId, Message message) {
         switch (message.type()) {
-            case CHOKE -> System.out.println("Received CHOKE from peer " + remotePeerId);
-            case UNCHOKE -> System.out.println("Received UNCHOKE from peer " + remotePeerId);
+            case CHOKE -> handleChokeMessage(remotePeerId);
+            case UNCHOKE -> handleUnchokeMessage(remotePeerId);
             case INTERESTED -> handleInterestedMessage(remotePeerId);
             case NOT_INTERESTED -> handleNotInterestedMessage(remotePeerId);
-            case HAVE -> System.out.println("Received HAVE from peer " + remotePeerId);
+            case HAVE -> handleHaveMessage(remotePeerId, message);
             case BITFIELD -> handleBitfieldMessage(remotePeerId, message);
-            case REQUEST -> System.out.println("Received REQUEST from peer " + remotePeerId);
-            case PIECE -> System.out.println("Received PIECE from peer " + remotePeerId);
+            case REQUEST -> handleRequestMessage(remotePeerId, message);
+            case PIECE -> handlePieceMessage(remotePeerId, message);
             default -> System.out.println("Received unknown message type from peer " + remotePeerId);
         }
     }
@@ -263,5 +272,140 @@ public class PeerProcess implements PeerContext, Runnable {
                 Math.min(configLoader.getCommonConfig().getNumberOfPreferredNeighbors(), candidates.size())));
 
         return preferred;
+    }
+
+
+    private void handleChokeMessage(int remotePeerId){
+        System.out.println("[INFO] Peer " + remotePeerId + " choked us");
+        isChoked.add(remotePeerId);
+    }
+
+    private void handleUnchokeMessage(int remotePeerId){
+        System.out.println("[INFO] Peer " + remotePeerId + " unchoked us");
+        isChoked.remove(remotePeerId);
+        requestNextPiece(remotePeerId);
+    }
+
+    private void handleHaveMessage(int remotePeerId, Message message){
+        if(message.payload().length != 4){
+            System.err.println("[ERROR] Invalid HAVE message from peer " + remotePeerId);
+            return;
+        }
+
+        int pieceIndex = java.nio.ByteBuffer.wrap(message.payload()).getInt();
+        System.out.println("[INFO] Peer " + remotePeerId + " has piece " + pieceIndex);
+
+        Bitfield neighborBitfield = neighborBitfields.get(remotePeerId);
+        if(neighborBitfield != null){
+            neighborBitfield.setPiece(pieceIndex);
+        }
+
+        ConnectionHandler handler = connections.get(remotePeerId);
+        if(handler == null) return;
+
+        try{
+           if(isInterested(remotePeerId) && !interestedPeers.contains(remotePeerId)){
+            handler.send(new Message(MessageType.INTERESTED, null));
+           }
+        }
+
+        catch(Exception e){
+            System.err.println("[ERROR] Failed to send INTERESTED: " + e.getMessage());
+        }
+    }
+
+    private void handleRequestMessage(int remotePeerId, Message message){
+        if(message.payload().length != 4) return;
+
+        int pieceIndex = java.nio.ByteBuffer.wrap(message.payload()).getInt();
+
+        if(isChoked.contains(remotePeerId)){
+            System.out.println("[WARN] Ignoring request from choked peer " + remotePeerId);
+            return;
+        }
+
+        try{
+            byte[] pieceData = downloadManager.readPiece(pieceIndex);
+            java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocate(4 + pieceData.length);
+            buffer.putInt(pieceIndex);
+            buffer.put(pieceData);
+
+            ConnectionHandler handler = connections.get(remotePeerId);
+            if(handler != null){
+                handler.send(new Message(MessageType.PIECE, buffer.array()));
+            }
+        }
+
+        catch(Exception e){
+            System.err.println("[ERROR] Failed to send piece: " + e.getMessage());
+        }
+    }
+
+    private void handlePieceMessage(int remotePeerId, Message message){
+        if(message.payload().length < 4) return;
+
+        java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(message.payload());
+        int pieceIndex = buffer.getInt();
+        byte[] pieceData = new byte[buffer.remaining()];
+        buffer.get(pieceData);
+
+        try{
+            downloadManager.writePiece(pieceIndex, pieceData);
+            broadcastHaveMessage(pieceIndex);
+
+            if(!downloadManager.isComplete() && !isChoked.contains(remotePeerId)){
+                requestNextPiece(remotePeerId);
+            }
+        }
+
+        catch(Exception e){
+            System.err.println("[ERROR] Failed to save piece: " + e.getMessage());
+        }
+    }
+
+    private void requestNextPiece(int remotePeerId){
+        Bitfield neighborBitfield = neighborBitfields.get(remotePeerId);
+        if(neighborBitfield == null) return;
+
+        List<Integer> availablePieces = new ArrayList<>();
+        for(int i = 0; i < downloadManager.getTotalPieces(); i++){
+            if(neighborBitfield.hasPiece(i) && !myBitfield.hasPiece(i)){
+                availablePieces.add(i);
+            }
+        }
+
+        if(availablePieces.isEmpty()) return;
+
+        int pieceIndex = availablePieces.get((int)(Math.random() * availablePieces.size()));
+
+        try{
+            java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocate(4);
+            buffer.putInt(pieceIndex);
+
+            ConnectionHandler handler = connections.get(remotePeerId);
+            if(handler != null){
+                handler.send(new Message(MessageType.REQUEST, buffer.array()));
+            }
+        }
+
+        catch(Exception e){
+            System.err.println("[ERROR] Failed to request piece: " + e.getMessage());
+        }
+    }
+
+    private void broadcastHaveMessage(int pieceIndex){
+        java.nio.ByteBuffer buffer = java.nio.ByteBuffer.allocate(4);
+        buffer.putInt(pieceIndex);
+        Message haveMessage = new Message(MessageType.HAVE, buffer.array());
+
+        for(ConnectionHandler handler : connections.values()){
+            try{
+                handler.send(haveMessage);
+            }
+
+            catch(Exception e){
+                System.err.println("[ERROR] Failed to broadcast HAVE: " + e.getMessage());
+            }
+        }
     }
 }
