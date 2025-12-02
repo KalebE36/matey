@@ -42,22 +42,38 @@ package edu.ufl.cnt4007.protocol;
 
 public class Bitfield {
     private byte[] bitfield;
-
-    public Bitfield(byte[] bitfield) {
-        this.bitfield = bitfield;
-    }
+    private final int totalPieces;
+    private final int pieceSize; // Assuming a default piece size; adjust as needed
+    private final long fileSize;
 
     public Bitfield(long fileSize, int pieceSize) {
-        int totalPieces = (int) Math.ceil((double) fileSize / pieceSize);
+        totalPieces = (int) Math.ceil((double) fileSize / pieceSize);
         this.bitfield = new byte[(int) Math.ceil((double) totalPieces / 8)];
+        this.pieceSize = pieceSize;
+        this.fileSize = fileSize;
+
     }
 
     public Bitfield(long fileSize, int pieceSize, boolean hasFile) {
-        int totalPieces = (int) Math.ceil((double) fileSize / pieceSize);
+        totalPieces = (int) Math.ceil((double) fileSize / pieceSize);
         this.bitfield = new byte[(int) Math.ceil((double) totalPieces / 8)];
         if (hasFile) {
             setAllPieces(totalPieces);
         }
+        this.pieceSize = pieceSize;
+        this.fileSize = fileSize;
+    }
+
+    public long getPieceSize(int index) {
+        if (index < 0 || index >= totalPieces) {
+            throw new IndexOutOfBoundsException("Piece index out of bounds");
+        }
+        if (index == totalPieces - 1) {
+            long lastPieceSize = fileSize % pieceSize;
+            // If the remainder is 0, the last piece is full-sized (pieceSize), not 0.
+            return lastPieceSize == 0 ? pieceSize : lastPieceSize;
+        }
+        return pieceSize;
     }
 
     public boolean hasPiece(int index) {
@@ -75,6 +91,10 @@ public class Bitfield {
         if (byteIndex < bitfield.length) {
             bitfield[byteIndex] |= (1 << (7 - bitIndex));
         }
+    }
+
+    public int getPieceCount() {
+        return totalPieces;
     }
 
     public int nextMissingPiece() {
@@ -98,11 +118,34 @@ public class Bitfield {
         }
     }
 
+    public boolean isCompleteFast() {
+        // 1. Check all full bytes (0xFF == all 8 bits set)
+        for (int i = 0; i < bitfield.length - 1; i++) {
+            if (bitfield[i] != (byte) 0xFF) {
+                return false;
+            }
+        }
+
+        // 2. Check the last, possibly partial, byte
+        int lastByteIndex = bitfield.length - 1;
+        for (int i = lastByteIndex * 8; i < totalPieces; i++) {
+            if (!hasPiece(i)) { // still need to use hasPiece for the last partial byte
+                return false;
+            }
+        }
+        return true;
+    }
+
     public byte[] bytes() {
+        // Returns a defensive copy to prevent external modification
+        return java.util.Arrays.copyOf(bitfield, bitfield.length);
+    }
+
+    public static Bitfield fromMessage(Message message, long fileSize, int pieceSize) {
+        byte[] payload = message.payload();
+        Bitfield bitfield = new Bitfield(fileSize, pieceSize);
+        bitfield.bitfield = java.util.Arrays.copyOf(payload, payload.length);
         return bitfield;
     }
 
-    public static Bitfield fromMessage(Message message) {
-        return new Bitfield(message.payload());
-    }
 }

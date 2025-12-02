@@ -28,13 +28,13 @@ public class Connector implements Runnable {
             // Only connect to peers with lower IDs
             // This is because those with higher IDs will connect to us
             // Thus avoiding duplicate connections
-            if (peerInfo.peerId < peerContext.getPeerId()) {
+            if (peerInfo.getPeerId() < peerContext.getPeerId()) {
                 try {
-                    Socket socket = new Socket(peerInfo.host, peerInfo.port);
+                    Socket socket = new Socket(peerInfo.getHost(), peerInfo.getPort());
                     ConnectionHandler connectionHandler = new ConnectionHandler(socket, peerContext);
                     new Thread(connectionHandler).start();
                 } catch (IOException e) {
-                    System.err.println("[ERROR] Failed to connect to peer " + peerInfo.peerId + ": " + e.getMessage());
+                    System.err.println("[ERROR] Failed to connect to peer " + peerInfo.getPeerId() + ": " + e.getMessage());
                 }
             }
         }
