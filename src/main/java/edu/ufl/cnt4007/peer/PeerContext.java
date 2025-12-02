@@ -6,12 +6,13 @@ import edu.ufl.cnt4007.protocol.Message;
 
 // Your PeerManager or similar class should implement this interface using @Override annotations.
 public interface PeerContext {
-    int getPeerId();
+  int getPeerId();
 
-    Bitfield getBitfield();
+  Bitfield getBitfield();
 
-    void onMessageReceived(int remotePeerId, Message message);
+  void onMessageReceived(int remotePeerId, Message message);
 
-    void registerConnection(int remotePeerId, ConnectionHandler handler);
-    void unregisterConnection(int remotePeerId);
+  void registerConnection(int remotePeerId, ConnectionHandler handler);
+
+  void unregisterConnection(int remotePeerId);
 }
