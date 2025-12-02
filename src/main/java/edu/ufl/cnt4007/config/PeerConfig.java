@@ -4,50 +4,36 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PeerConfig {
-
-  public static class PeerInfo {
-    public int peerId;
-    public String host;
-    public int port;
-    public boolean hasFile;
-
-    public PeerInfo(int peerId, String host, int port, boolean hasFile) {
-      this.peerId = peerId;
-      this.host = host;
-      this.port = port;
-      this.hasFile = hasFile;
-    }
-  }
-
-  private int numberOfPeers = 0;
-  private Map<Integer, PeerInfo> peerInfoMap = new HashMap<>();
+  private final Map<Integer, PeerInfo> peerInfoMap = new HashMap<>();
 
   public PeerConfig() throws IOException {
-    try ( // Parse PeerInfo.cfg
-    BufferedReader reader = new BufferedReader(new FileReader("cfg/PeerInfo.cfg"))) {
+    try (BufferedReader reader = new BufferedReader(new FileReader("cfg/PeerInfo.cfg"))) {
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
-        if (line.isEmpty()) continue;
-        String[] parts = line.split("\\s+", 4);
-        if (parts.length == 4) {
-          // Parse 0 as int
-          int peerId = Integer.parseInt(parts[0]);
-          PeerInfo peerInfo =
-              new PeerInfo(peerId, parts[1], Integer.parseInt(parts[2]), parts[3].equals("1"));
+        if (line.isEmpty())
+          continue;
 
-          peerInfoMap.put(peerId, peerInfo);
-          this.numberOfPeers++;
-        }
+        String[] parts = line.split("\\s+");
+        if (parts.length != 4)
+          continue; // skip invalid lines
+
+        int peerId = Integer.parseInt(parts[0]);
+        String host = parts[1];
+        int port = Integer.parseInt(parts[2]);
+        boolean hasFile = parts[3].equals("1"); // 1 = has file, 0 = no file
+
+        peerInfoMap.put(peerId, new PeerInfo(peerId, host, port, hasFile));
       }
     }
   }
 
   public int getNumberOfPeers() {
-    return numberOfPeers;
+    return peerInfoMap.size();
   }
 
   public Map<Integer, PeerInfo> getPeerInfoMap() {
@@ -58,6 +44,10 @@ public class PeerConfig {
     return peerInfoMap.get(peerId);
   }
 
+  public List<PeerInfo> getAllPeerInfo() {
+    return List.copyOf(peerInfoMap.values());
+  }
+
   public void setPeerInfo(int peerId, PeerInfo info) {
     peerInfoMap.put(peerId, info);
   }
@@ -65,7 +55,7 @@ public class PeerConfig {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("NumberOfPeers: ").append(numberOfPeers).append("\n");
+    sb.append("Number of peers: ").append(getNumberOfPeers()).append("\n");
     for (PeerInfo info : peerInfoMap.values()) {
       sb.append(info.peerId)
           .append(" ")
@@ -73,7 +63,7 @@ public class PeerConfig {
           .append(" ")
           .append(info.port)
           .append(" ")
-          .append(info.hasFile ? "yes" : "no")
+          .append(info.hasFile ? "1" : "0") // match cfg format
           .append("\n");
     }
     return sb.toString();
