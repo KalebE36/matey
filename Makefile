@@ -12,3 +12,6 @@ compile:
 
 format:
 	@mvn spotless:apply
+
+check-format:
+	@mvn spotless:check
