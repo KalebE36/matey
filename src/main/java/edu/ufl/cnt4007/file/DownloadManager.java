@@ -1,11 +1,12 @@
 package edu.ufl.cnt4007.file;
 
-import edu.ufl.cnt4007.protocol.Bitfield;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import edu.ufl.cnt4007.protocol.Bitfield;
 
 /*
  * This DownloadManger class manages file download and upload operations for a peer
@@ -32,9 +33,53 @@ public class DownloadManager {
     Files.createDirectories(Paths.get(baseDir));
     File targetFile = new File(baseDir, fileName);
     this.file = new RandomAccessFile(targetFile, "rw");
-    if (file.length() == 0) {
-      file.setLength(fileSize);
+
+    // Initialize file size
+    initializeFile(fileName);
+  }
+
+  /**
+   * Initializes the file by either writing empty data, or copying
+   * the file you want to seed from ROOT directory.
+   * 
+   * @throws IOException
+   */
+  private void initializeFile(String fileName) throws IOException {
+    if (bitfield == null) {
+      throw new IOException("Bitfield is not initialized");
     }
+
+    File rootFile = new File(fileName); // Assuming ROOT is current working dir
+
+    if (rootFile.exists() && rootFile.isFile()) {
+      // Copy the full file from ROOT to peer directory
+      try (RandomAccessFile src = new RandomAccessFile(rootFile, "r")) {
+        byte[] buffer = new byte[1024 * 1024]; // 1 MB buffer
+        long remaining = src.length();
+        long offset = 0;
+
+        while (remaining > 0) {
+          int bytesRead = src.read(buffer, 0, (int) Math.min(buffer.length, remaining));
+          file.seek(offset);
+          file.write(buffer, 0, bytesRead);
+          offset += bytesRead;
+          remaining -= bytesRead;
+        }
+      }
+    } else {
+      // No ROOT file, fill missing pieces with zeros
+      for (int i = 0; i < totalPieces; i++) {
+        if (!bitfield.hasPiece(i)) {
+          long offset = (long) i * pieceSize;
+          int currentSize = getPieceSize(i);
+          byte[] emptyData = new byte[currentSize];
+          file.seek(offset);
+          file.write(emptyData);
+        }
+      }
+    }
+
+    file.getFD().sync(); // Ensure all data is flushed
   }
 
   // Reads a piece from file
