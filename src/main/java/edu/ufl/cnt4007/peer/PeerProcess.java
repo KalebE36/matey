@@ -2,6 +2,7 @@ package edu.ufl.cnt4007.peer;
 
 import edu.ufl.cnt4007.config.ConfigLoader;
 import edu.ufl.cnt4007.config.PeerInfo;
+import edu.ufl.cnt4007.file.DownloadManager;
 import edu.ufl.cnt4007.net.ConnectionHandler;
 import edu.ufl.cnt4007.net.Connector;
 import edu.ufl.cnt4007.net.Listener;
@@ -35,6 +36,7 @@ import java.util.List;
  * is managed.
  */
 public class PeerProcess implements PeerContext, Runnable {
+  private DownloadManager downloadManager;
   private final PeerState peerState;
 
   @SuppressWarnings("unused")
@@ -58,6 +60,18 @@ public class PeerProcess implements PeerContext, Runnable {
             configLoader.getCommonConfig().getPieceSize(),
             peerProcessInfo.isHasFile());
     this.peerState = new PeerState(peerProcessInfo, allPeers, myBitfield, configLoader);
+
+    try {
+      this.downloadManager =
+          new DownloadManager(
+              peerId,
+              configLoader.getCommonConfig().getFileName(),
+              configLoader.getCommonConfig().getFileSize(),
+              configLoader.getCommonConfig().getPieceSize(),
+              myBitfield);
+    } catch (Exception e) {
+      System.out.println("[DEBUG] Error initializing DownloadManager class");
+    }
 
     this.chokingManager = new ChokingManager(this.peerState);
     this.messageHandler = new MessageHandler(this.peerState);
