@@ -16,6 +16,7 @@ public class App {
       new Thread(peerProcess).start();
     } catch (Exception e) {
       System.err.println("Error starting peer process: " + e.getMessage());
+      e.printStackTrace();
     }
   }
 }

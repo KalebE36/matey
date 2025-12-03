@@ -17,10 +17,14 @@ public class CommonConfig {
   private final int pieceSize;
 
   private void validateFileSize() throws IOException {
-    long actualSize = Files.size(Paths.get(this.fileName));
-    if (actualSize != this.fileSize) {
-      throw new IOException(
-          this.fileName + " size mismatch. Expected: " + this.fileSize + ", actual: " + actualSize);
+    if (Files.exists(Paths.get(this.fileName))) {
+      long actualSize = Files.size(Paths.get(this.fileName));
+      if (actualSize != this.fileSize) {
+        throw new IOException(
+            this.fileName + " size mismatch. Expected: " + this.fileSize + ", actual: " + actualSize);
+      }
+    } else {
+      System.out.println("[INFO] File " + this.fileName + " does not exist yet. Skipping size validation.");
     }
   }
 
@@ -33,9 +37,11 @@ public class CommonConfig {
 
       while ((line = reader.readLine()) != null) {
         line = line.trim();
-        if (line.isEmpty()) continue;
+        if (line.isEmpty())
+          continue;
         String[] parts = line.split("\\s+", 2);
-        if (parts.length == 2) cfg.put(parts[0], parts[1]);
+        if (parts.length == 2)
+          cfg.put(parts[0], parts[1]);
       }
     }
 
