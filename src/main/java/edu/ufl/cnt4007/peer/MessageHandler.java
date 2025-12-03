@@ -163,29 +163,46 @@ public class MessageHandler {
     // First 4 bytes of payload is the piece index
     java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(message.payload());
     int pieceIndex = buffer.getInt();
-    byte[] pieceData = new byte[buffer.remaining()];
+
+    // Validate expected piece size
+    int expectedSize = (int) peerState.getMyBitfield().getPieceSize(pieceIndex);
+    int actualPayloadSize = buffer.remaining();
+
+    if (actualPayloadSize != expectedSize) {
+      System.err.println(
+          "[ERROR] Piece "
+              + pieceIndex
+              + " size mismatch. Expected: "
+              + expectedSize
+              + ", got: "
+              + actualPayloadSize);
+      return;
+    }
+
+    byte[] pieceData = new byte[actualPayloadSize];
     buffer.get(pieceData);
 
     try {
       peerState.getDownloadManager().writePiece(pieceIndex, pieceData);
+
+      peerState.setHavePiece(pieceIndex);
+
+      // Notify all surrounding peers about the new piece
+      broadcastHave(pieceIndex);
+
+      // If I have all pieces now, log completion and stop downloading
+      if (peerState.isComplete()) {
+        System.out.println("[INFO] I have downloaded all pieces!");
+        broadcastNotInterested();
+        return;
+      }
+
+      // Determine next missing piece to request
+      attemptRequestNextPiece(remotePeerId);
+
     } catch (Exception e) {
       System.err.println("[ERROR] Failed to save piece: " + e.getMessage());
     }
-
-    peerState.setHavePiece(pieceIndex);
-
-    // Notify all surrounding peers about the new piece
-    broadcastHave(pieceIndex);
-
-    // If I have all pieces now, log completion and stop downloading
-    if (peerState.isComplete()) {
-      System.out.println("[INFO] I have downloaded all pieces!");
-      broadcastNotInterested();
-      return;
-    }
-
-    // Determine next missing piece to request
-    attemptRequestNextPiece(remotePeerId);
   }
 
   private void handleRequestMessage(int remotePeerId, Message message) {
@@ -216,14 +233,28 @@ public class MessageHandler {
 
     try {
       byte[] pieceData = peerState.getDownloadManager().readPiece(pieceIndex);
-      ByteBuffer buffer = ByteBuffer.allocate(4 + pieceData.length);
+
+      // Validate that piece data matches expected size
+      if (pieceData.length != pieceSize) {
+        System.err.println(
+            "[ERROR] Piece "
+                + pieceIndex
+                + " read size mismatch. Expected: "
+                + pieceSize
+                + ", got: "
+                + pieceData.length);
+        return;
+      }
+
+      ByteBuffer buffer = ByteBuffer.allocate(4 + (int) pieceSize);
       buffer.putInt(pieceIndex);
       buffer.put(pieceData);
 
       payload = buffer.array();
 
     } catch (Exception e) {
-      System.out.println("[Error] Failed to send piece data" + e.getMessage());
+      System.out.println("[Error] Failed to send piece data: " + e.getMessage());
+      return;
     }
 
     Message msg = new Message(MessageType.PIECE, payload);

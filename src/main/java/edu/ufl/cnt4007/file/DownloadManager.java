@@ -46,6 +46,10 @@ public class DownloadManager {
     long offset = (long) pieceIndex * pieceSize;
     int currentSize = getPieceSize(pieceIndex);
 
+    if (offset + currentSize > fileSize) {
+      currentSize = (int) (fileSize - offset);
+    }
+
     byte[] pieceData = new byte[currentSize];
     file.seek(offset);
     file.readFully(pieceData);
@@ -63,15 +67,23 @@ public class DownloadManager {
     long offset = (long) pieceIndex * pieceSize;
     int expectedSize = getPieceSize(pieceIndex);
 
+    // Validate exact piece size - no truncation allowed
     if (data.length != expectedSize) {
       throw new IOException(
-          "Piece size mismatch. Expected: " + expectedSize + ", got: " + data.length);
+          "Piece size mismatch. Expected: "
+              + expectedSize
+              + ", got: "
+              + data.length
+              + ". Piece may be corrupted during transmission.");
     }
 
+    // Write the piece
     file.seek(offset);
     file.write(data);
-    bitfield.setPiece(pieceIndex); // Update bitfield
-    System.out.println("[INFO] Piece " + pieceIndex + "written successfully");
+    file.getFD().sync();
+
+    // Update bitfield after successful write
+    bitfield.setPiece(pieceIndex);
   }
 
   // Gets the size of a specific piece
