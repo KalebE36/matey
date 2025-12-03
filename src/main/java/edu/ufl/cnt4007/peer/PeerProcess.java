@@ -45,7 +45,7 @@ public class PeerProcess implements PeerContext, Runnable {
   @SuppressWarnings("unused")
   private final ChokingManager chokingManager;
 
-  public PeerProcess(int peerId, ConfigLoader configLoader) {
+  public PeerProcess(int peerId, ConfigLoader configLoader) throws Exception {
     PeerInfo peerProcessInfo =
         new PeerInfo(
             peerId,
@@ -59,7 +59,6 @@ public class PeerProcess implements PeerContext, Runnable {
             configLoader.getCommonConfig().getFileSize(),
             configLoader.getCommonConfig().getPieceSize(),
             peerProcessInfo.isHasFile());
-    this.peerState = new PeerState(peerProcessInfo, allPeers, myBitfield, configLoader);
 
     try {
       this.downloadManager =
@@ -71,7 +70,11 @@ public class PeerProcess implements PeerContext, Runnable {
               myBitfield);
     } catch (Exception e) {
       System.out.println("[DEBUG] Error initializing DownloadManager class");
+      throw new Exception("[DEBUG] Error initializing DownloadManager class");
     }
+
+    this.peerState =
+        new PeerState(peerProcessInfo, allPeers, myBitfield, configLoader, downloadManager);
 
     this.chokingManager = new ChokingManager(this.peerState);
     this.messageHandler = new MessageHandler(this.peerState);

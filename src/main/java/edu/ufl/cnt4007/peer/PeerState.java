@@ -2,6 +2,7 @@ package edu.ufl.cnt4007.peer;
 
 import edu.ufl.cnt4007.config.ConfigLoader;
 import edu.ufl.cnt4007.config.PeerInfo;
+import edu.ufl.cnt4007.file.DownloadManager;
 import edu.ufl.cnt4007.net.ConnectionHandler;
 import edu.ufl.cnt4007.protocol.Bitfield;
 import java.util.List;
@@ -18,6 +19,7 @@ public class PeerState {
   private final List<PeerInfo> allPeers;
   private final Bitfield myBitfield;
   private final ConfigLoader configLoader;
+  private DownloadManager downloadManager;
 
   // Map of peerId -> neighbor's bitfield
   private final Map<Integer, Bitfield> neighborBitfields = new ConcurrentHashMap<>();
@@ -42,11 +44,13 @@ public class PeerState {
       PeerInfo peerProcessInfo,
       List<PeerInfo> allPeers,
       Bitfield myBitfield,
-      ConfigLoader configLoader) {
+      ConfigLoader configLoader,
+      DownloadManager downloadManager) {
     this.peerProcessInfo = peerProcessInfo;
     this.allPeers = allPeers;
     this.myBitfield = myBitfield;
     this.configLoader = configLoader;
+    this.downloadManager = downloadManager;
   }
 
   public void setupConnection(int peerId, ConnectionHandler handler) {
@@ -147,5 +151,9 @@ public class PeerState {
     }
 
     resetBytesDownloadedInInterval();
+  }
+
+  public DownloadManager getDownloadManager() {
+    return this.downloadManager;
   }
 }

@@ -161,9 +161,16 @@ public class MessageHandler {
     System.out.println("[INFO] Received PIECE from peer " + remotePeerId);
 
     // First 4 bytes of payload is the piece index
-    int pieceIndex = ByteBuffer.wrap(message.payload(), 0, 4).getInt();
+    java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(message.payload());
+    int pieceIndex = buffer.getInt();
+    byte[] pieceData = new byte[buffer.remaining()];
+    buffer.get(pieceData);
 
-    // TODO: Extract piece data and store it locally
+    try {
+      peerState.getDownloadManager().writePiece(pieceIndex, pieceData);
+    } catch (Exception e) {
+      System.err.println("[ERROR] Failed to save piece: " + e.getMessage());
+    }
 
     peerState.setHavePiece(pieceIndex);
 
@@ -205,10 +212,21 @@ public class MessageHandler {
     // Payload consists of a 4 byte index + the actual piece data
     // Calculate piece size
 
-    // TODO: Add the actual piece data here
-    byte[] payload = ByteBuffer.allocate(4 + (int) pieceSize).putInt(pieceIndex).array();
+    byte[] payload = null;
 
-    Message msg = new Message(MessageType.PIECE, payload); // Placeholder for actual piece data
+    try {
+      byte[] pieceData = peerState.getDownloadManager().readPiece(pieceIndex);
+      ByteBuffer buffer = ByteBuffer.allocate(4 + pieceData.length);
+      buffer.putInt(pieceIndex);
+      buffer.put(pieceData);
+
+      payload = buffer.array();
+
+    } catch (Exception e) {
+      System.out.println("[Error] Failed to send piece data" + e.getMessage());
+    }
+
+    Message msg = new Message(MessageType.PIECE, payload);
     safelySend(remotePeerId, msg, "PIECE " + pieceIndex);
 
     // Increment download stats

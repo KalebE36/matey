@@ -94,11 +94,6 @@ public class DownloadManager {
     return true;
   }
 
-  // Gets the total number of pieces
-  public int getTotalPieces() {
-    return totalPieces;
-  }
-
   // Gets the file size
   public long getFileSize() {
     return fileSize;
