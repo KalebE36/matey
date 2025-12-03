@@ -15,12 +15,10 @@ public class PeerConfig {
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
-        if (line.isEmpty())
-          continue;
+        if (line.isEmpty()) continue;
 
         String[] parts = line.split("\\s+");
-        if (parts.length != 4)
-          continue; // skip invalid lines
+        if (parts.length != 4) continue; // skip invalid lines
 
         int peerId = Integer.parseInt(parts[0]);
         String host = parts[1];
@@ -57,13 +55,13 @@ public class PeerConfig {
     StringBuilder sb = new StringBuilder();
     sb.append("Number of peers: ").append(getNumberOfPeers()).append("\n");
     for (PeerInfo info : peerInfoMap.values()) {
-      sb.append(info.peerId)
+      sb.append(info.getPeerId())
           .append(" ")
-          .append(info.host)
+          .append(info.getHost())
           .append(" ")
-          .append(info.port)
+          .append(info.getPort())
           .append(" ")
-          .append(info.hasFile ? "1" : "0") // match cfg format
+          .append(info.isHasFile() ? "1" : "0") // match cfg format
           .append("\n");
     }
     return sb.toString();
