@@ -34,6 +34,10 @@ This performs a clean Maven build and prepares the project for execution.
 
 ## Running the P2P System
 
+> Note: We use the `algo.pdf` as the test file. This is approximately 5Mb and we transfer at a rate of 256Kb per piece.
+> You can configure all of these, but if you change the file make sure to put it in root and change the `cfg/Common.cfg`
+> to match the new file.
+
 ### Option 1: Use the launcher script (recommended)
 
 1. Make the script executable:
