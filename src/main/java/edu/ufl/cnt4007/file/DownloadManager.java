@@ -1,12 +1,11 @@
 package edu.ufl.cnt4007.file;
 
+import edu.ufl.cnt4007.protocol.Bitfield;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
-import edu.ufl.cnt4007.protocol.Bitfield;
 
 /*
  * This DownloadManger class manages file download and upload operations for a peer
@@ -39,9 +38,9 @@ public class DownloadManager {
   }
 
   /**
-   * Initializes the file by either writing empty data, or copying
-   * the file you want to seed from ROOT directory.
-   * 
+   * Initializes the file by either writing empty data, or copying the file you want to seed from
+   * ROOT directory.
+   *
    * @throws IOException
    */
   private void initializeFile(String fileName) throws IOException {

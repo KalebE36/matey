@@ -2,7 +2,7 @@
 
 # --- Configuration ---
 START_PEER=1001
-END_PEER=1003
+END_PEER=1005
 MAVEN_COMMAND="mvn exec:java -Dexec.args="
 LOG_DIR="./logs"
 
