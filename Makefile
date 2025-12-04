@@ -16,11 +16,11 @@ run-peer-3:
 
 # Kaleb
 run-peer-4:
-	@mvn exec:java -Dexec.args="1004"
+	@mvn exec:java -Dexec.args="1005"
 
 # Edward
 run-peer-5:
-	@mvn exec:java -Dexec.args="1004"
+	@mvn exec:java -Dexec.args="1006"
 
 compile:
 	@mvn clean compile
