@@ -1,5 +1,7 @@
 package edu.ufl.cnt4007.peer;
 
+import java.util.List;
+
 import edu.ufl.cnt4007.config.ConfigLoader;
 import edu.ufl.cnt4007.config.PeerInfo;
 import edu.ufl.cnt4007.file.DownloadManager;
@@ -8,7 +10,6 @@ import edu.ufl.cnt4007.net.Connector;
 import edu.ufl.cnt4007.net.Listener;
 import edu.ufl.cnt4007.protocol.Bitfield;
 import edu.ufl.cnt4007.protocol.Message;
-import java.util.List;
 
 /**
  * This is the main peer process class that manages peer-to-peer interactions.
